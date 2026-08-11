@@ -1,0 +1,26 @@
+seed: 42
+data:
+  n_rows: 12000
+  n_geographies: 80
+  train_path: data/processed/train.csv
+  holdout_path: data/processed/holdout.csv
+model:
+  target: expected_loss
+  exposure_col: exposure_years
+  group_col: geography_id
+  cv_folds: 4
+  tweedie_power: 1.5
+  xgboost_estimators: 160
+  xgboost_max_depth: 3
+  xgboost_learning_rate: 0.045
+pricing:
+  expense_load: 0.18
+  profit_load: 0.07
+  min_premium: 120
+  tier_quantiles: [0.2, 0.5, 0.8, 0.95]
+monitoring:
+  psi_warning: 0.1
+  psi_alert: 0.25
+artifacts:
+  model_dir: models
+  report_dir: reports
