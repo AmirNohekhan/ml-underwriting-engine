@@ -8,8 +8,14 @@ def population_stability_index(expected: pd.Series, actual: pd.Series, bins: int
     quantiles = np.unique(np.quantile(expected.dropna(), np.linspace(0, 1, bins + 1)))
     if len(quantiles) < 3:
         return 0.0
-    exp_counts = pd.cut(expected, bins=quantiles, include_lowest=True).value_counts(normalize=True, sort=False)
-    act_counts = pd.cut(actual, bins=quantiles, include_lowest=True).value_counts(normalize=True, sort=False)
+    # Open the outer edges so actual values outside the expected range land in
+    # the extreme bin instead of being dropped as NaN, which would otherwise
+    # mask the most severe kind of drift (new out-of-range values).
+    edges = quantiles.copy()
+    edges[0] = -np.inf
+    edges[-1] = np.inf
+    exp_counts = pd.cut(expected, bins=edges, include_lowest=True).value_counts(normalize=True, sort=False)
+    act_counts = pd.cut(actual, bins=edges, include_lowest=True).value_counts(normalize=True, sort=False)
     exp = np.maximum(exp_counts.to_numpy(), 1e-6)
     act = np.maximum(act_counts.reindex(exp_counts.index, fill_value=0).to_numpy(), 1e-6)
     return float(np.sum((act - exp) * np.log(act / exp)))
