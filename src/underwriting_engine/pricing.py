@@ -9,8 +9,10 @@ TIER_LABELS = ["A_preferred", "B_standard", "C_watch", "D_high", "E_decline_revi
 
 def assign_tiers(predicted_loss: np.ndarray, quantiles: list[float]) -> tuple[np.ndarray, list[float]]:
     predicted_loss = np.asarray(predicted_loss, dtype=float)
-    cuts = np.quantile(predicted_loss, quantiles).tolist()
-    tiers = pd.cut(pd.Series(predicted_loss), bins=[-np.inf, *cuts, np.inf], labels=TIER_LABELS, include_lowest=True)
+    cuts = sorted(set(np.quantile(predicted_loss, quantiles).tolist()))
+    bins = [-np.inf, *cuts, np.inf]
+    labels = TIER_LABELS[: len(bins) - 1]
+    tiers = pd.cut(pd.Series(predicted_loss), bins=bins, labels=labels, include_lowest=True)
     return tiers.astype(str).to_numpy(), cuts
 
 

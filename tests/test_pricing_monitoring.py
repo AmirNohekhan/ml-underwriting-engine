@@ -1,7 +1,7 @@
 import pandas as pd
 
 from underwriting_engine.monitoring import drift_report
-from underwriting_engine.pricing import price_policies
+from underwriting_engine.pricing import assign_tiers, price_policies
 
 
 def test_price_policies_adds_tiers_and_minimum_premium():
@@ -9,6 +9,15 @@ def test_price_policies_adds_tiers_and_minimum_premium():
     scored = price_policies(df, [10, 200, 400, 900, 1500], 0.18, 0.07, 120, [0.2, 0.5, 0.8, 0.95])
     assert "risk_tier" in scored
     assert scored["technical_premium"].min() >= 120
+
+
+def test_assign_tiers_handles_duplicate_quantile_cuts():
+    # Low-cardinality/tied predicted losses can make np.quantile return
+    # duplicate cut points; assign_tiers should not raise on that.
+    predicted_loss = [100.0, 100.0, 100.0, 100.0, 100.0]
+    tiers, cuts = assign_tiers(predicted_loss, [0.2, 0.5, 0.8, 0.95])
+    assert len(cuts) == len(set(cuts))
+    assert len(tiers) == len(predicted_loss)
 
 
 def test_drift_report_flags_shift():
