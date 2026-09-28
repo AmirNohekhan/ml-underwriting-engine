@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import logging
 from typing import Literal
 
 import pandas as pd
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from underwriting_engine.config import load_config
 from underwriting_engine.features import FEATURES
 from underwriting_engine.modeling import load_model
 from underwriting_engine.pricing import price_policies
+
+logger = logging.getLogger(__name__)
 
 
 class RiskRequest(BaseModel):
@@ -43,16 +46,27 @@ calibrator = None
 @app.on_event("startup")
 def _load() -> None:
     global model, calibrator
-    model, calibrator = load_model(config["artifacts"]["model_dir"])
+    try:
+        model, calibrator = load_model(config["artifacts"]["model_dir"])
+    except FileNotFoundError:
+        logger.warning(
+            "No trained model artifacts found in %s; /predict will return 503 until "
+            "the pipeline is trained.",
+            config["artifacts"]["model_dir"],
+        )
+        model, calibrator = None, None
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, object]:
+    model_loaded = model is not None and calibrator is not None
+    return {"status": "ok" if model_loaded else "degraded", "model_loaded": model_loaded}
 
 
 @app.post("/predict")
 def predict(request: RiskRequest) -> dict[str, object]:
+    if model is None or calibrator is None:
+        raise HTTPException(status_code=503, detail="Model is not loaded yet. Train the pipeline first.")
     frame = pd.DataFrame([request.model_dump()])
     pred = calibrator.predict(model.predict(frame[FEATURES]))
     scored = price_policies(frame, pred, **config["pricing"]).iloc[0]
