@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Literal
 
 import pandas as pd
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from underwriting_engine.config import load_config
@@ -48,11 +48,13 @@ def _load() -> None:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok" if model is not None else "model_not_loaded"}
 
 
 @app.post("/predict")
 def predict(request: RiskRequest) -> dict[str, object]:
+    if model is None or calibrator is None:
+        raise HTTPException(status_code=503, detail="Model artifacts are not loaded")
     frame = pd.DataFrame([request.model_dump()])
     pred = calibrator.predict(model.predict(frame[FEATURES]))
     scored = price_policies(frame, pred, **config["pricing"]).iloc[0]

@@ -1,4 +1,4 @@
-.PHONY: install generate train score all test api
+.PHONY: install generate train score all test lint api
 
 install:
 	python -m pip install -e .[dev]
@@ -17,6 +17,9 @@ all:
 
 test:
 	pytest
+
+lint:
+	ruff check src tests
 
 api:
 	uvicorn underwriting_engine.api:app --reload
