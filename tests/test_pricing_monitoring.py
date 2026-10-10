@@ -1,6 +1,7 @@
+import numpy as np
 import pandas as pd
 
-from underwriting_engine.monitoring import drift_report
+from underwriting_engine.monitoring import drift_report, population_stability_index
 from underwriting_engine.pricing import price_policies
 
 
@@ -17,3 +18,16 @@ def test_drift_report_flags_shift():
     report = drift_report(baseline, current, ["x", "cat"], warning=0.01, alert=0.1)
     assert set(report["feature"]) == {"x", "cat"}
     assert report["psi"].max() > 0
+
+
+def test_psi_is_finite_when_current_values_fall_outside_baseline_range():
+    baseline = pd.Series(range(100))
+    current = pd.Series(range(500, 600))
+    psi = population_stability_index(baseline, current)
+    assert np.isfinite(psi)
+    assert psi > 0.25
+
+
+def test_psi_is_near_zero_for_identical_distributions():
+    baseline = pd.Series(range(100))
+    assert population_stability_index(baseline, baseline) < 1e-6
