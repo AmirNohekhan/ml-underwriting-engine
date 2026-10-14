@@ -3,12 +3,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-
 TIER_LABELS = ["A_preferred", "B_standard", "C_watch", "D_high", "E_decline_review"]
 
 
 def assign_tiers(predicted_loss: np.ndarray, quantiles: list[float]) -> tuple[np.ndarray, list[float]]:
     predicted_loss = np.asarray(predicted_loss, dtype=float)
+    if len(quantiles) != len(TIER_LABELS) - 1:
+        raise ValueError(f"Expected {len(TIER_LABELS) - 1} tier quantiles, got {len(quantiles)}")
     cuts = np.quantile(predicted_loss, quantiles).tolist()
     tiers = pd.cut(pd.Series(predicted_loss), bins=[-np.inf, *cuts, np.inf], labels=TIER_LABELS, include_lowest=True)
     return tiers.astype(str).to_numpy(), cuts

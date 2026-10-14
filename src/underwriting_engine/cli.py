@@ -6,7 +6,11 @@ from pathlib import Path
 import pandas as pd
 
 from underwriting_engine.config import ensure_dirs, load_config
-from underwriting_engine.data import generate_synthetic_portfolio, split_train_holdout, write_dataset
+from underwriting_engine.data import (
+    generate_synthetic_portfolio,
+    split_train_holdout,
+    write_dataset,
+)
 from underwriting_engine.diagnostics import fairness_report, stability_report
 from underwriting_engine.explain import global_explanations
 from underwriting_engine.features import FEATURES

@@ -16,7 +16,7 @@ def fairness_report(scored: pd.DataFrame, target: str = "expected_loss") -> pd.D
                 {
                     "feature": feature,
                     "value": value,
-                    "n": int(len(group)),
+                    "n": len(group),
                     "avg_predicted_loss": float(np.average(group["predicted_expected_loss"], weights=group["exposure_years"])),
                     "avg_actual_loss": float(np.average(group[target], weights=group["exposure_years"])),
                     "weighted_error": float(err),
@@ -34,7 +34,7 @@ def stability_report(scored: pd.DataFrame) -> pd.DataFrame:
         rows.append(
             {
                 "risk_tier": tier,
-                "n": int(len(group)),
+                "n": len(group),
                 "avg_predicted_loss": float(pred),
                 "avg_actual_loss": float(actual),
                 "loss_ratio": float(actual / max(pred, 1e-6)),

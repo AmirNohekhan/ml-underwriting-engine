@@ -8,6 +8,8 @@ def population_stability_index(expected: pd.Series, actual: pd.Series, bins: int
     quantiles = np.unique(np.quantile(expected.dropna(), np.linspace(0, 1, bins + 1)))
     if len(quantiles) < 3:
         return 0.0
+    # Open the outer edges so current values outside the baseline range are counted, not dropped.
+    quantiles[0], quantiles[-1] = -np.inf, np.inf
     exp_counts = pd.cut(expected, bins=quantiles, include_lowest=True).value_counts(normalize=True, sort=False)
     act_counts = pd.cut(actual, bins=quantiles, include_lowest=True).value_counts(normalize=True, sort=False)
     exp = np.maximum(exp_counts.to_numpy(), 1e-6)
