@@ -17,3 +17,12 @@ def test_drift_report_flags_shift():
     report = drift_report(baseline, current, ["x", "cat"], warning=0.01, alert=0.1)
     assert set(report["feature"]) == {"x", "cat"}
     assert report["psi"].max() > 0
+
+
+def test_psi_counts_values_outside_baseline_range():
+    from underwriting_engine.monitoring import population_stability_index
+
+    baseline = pd.Series(range(100), dtype=float)
+    shifted = pd.Series(range(500, 600), dtype=float)
+    assert population_stability_index(baseline, shifted) > 1.0
+    assert population_stability_index(baseline, baseline) == 0.0
