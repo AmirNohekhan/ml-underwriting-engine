@@ -18,5 +18,8 @@ all:
 test:
 	pytest
 
+lint:
+	ruff check src tests
+
 api:
 	uvicorn underwriting_engine.api:app --reload
